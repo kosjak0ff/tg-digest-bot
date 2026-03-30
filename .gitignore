@@ -9,5 +9,5 @@ __pycache__
 .pyright
 dmypy.json
 .venv
-.codex-swarm/worktrees
-.codex-swarm/tasks.json
+AGENTS.md
+.codex-swarm/
