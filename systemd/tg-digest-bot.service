@@ -1,0 +1,16 @@
+[Unit]
+Description=Telegram Digest Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/tg-digest-bot
+Environment=PYTHONPATH=/opt/tg-digest-bot/src
+ExecStart=/opt/tg-digest-bot/.venv/bin/python -m tg_digest_bot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

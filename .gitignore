@@ -9,5 +9,6 @@ __pycache__
 .pyright
 dmypy.json
 .venv
+data/*.sqlite3
 AGENTS.md
 .codex-swarm/
