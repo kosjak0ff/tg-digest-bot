@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import html
 import logging
 from datetime import datetime, timezone
@@ -28,38 +29,45 @@ class DigestService:
         self.bot = bot
         self.target_chat_id = target_chat_id
         self.target_thread_id = target_thread_id
+        self._lock = asyncio.Lock()
 
-    async def run_digest(self) -> None:
-        posts = await self.repository.get_pending_posts()
-        if not posts:
-            logger.info("Digest skipped: no new posts.")
-            return
+    async def run_digest(self) -> str:
+        if self._lock.locked():
+            logger.info("Digest skipped: another run is already in progress.")
+            return "busy"
 
-        started_at = datetime.now(timezone.utc)
-        summary = await self.perplexity_client.summarize_posts(posts)
-        message_text = self._format_digest_message(posts, summary, started_at)
-        digest_id = await self.repository.create_digest_record(
-            started_at=started_at,
-            finished_at=datetime.now(timezone.utc),
-            posts_count=len(posts),
-            summary_text=summary.raw_text,
-        )
+        async with self._lock:
+            posts = await self.repository.get_pending_posts()
+            if not posts:
+                logger.info("Digest skipped: no new posts.")
+                return "empty"
 
-        for chunk in split_for_telegram(message_text):
-            await self.bot.send_message(
-                chat_id=self.target_chat_id,
-                message_thread_id=self.target_thread_id,
-                text=chunk,
-                parse_mode="HTML",
-                disable_web_page_preview=True,
+            started_at = datetime.now(timezone.utc)
+            summary = await self.perplexity_client.summarize_posts(posts)
+            message_text = self._format_digest_message(posts, summary, started_at)
+            digest_id = await self.repository.create_digest_record(
+                started_at=started_at,
+                finished_at=datetime.now(timezone.utc),
+                posts_count=len(posts),
+                summary_text=summary.raw_text,
             )
 
-        await self.repository.mark_posts_digested(
-            post_ids=[post.id for post in posts],
-            digested_at=datetime.now(timezone.utc),
-            digest_id=digest_id,
-        )
-        logger.info("Digest sent successfully: digest_id=%s posts=%s", digest_id, len(posts))
+            for chunk in split_for_telegram(message_text):
+                await self.bot.send_message(
+                    chat_id=self.target_chat_id,
+                    message_thread_id=self.target_thread_id,
+                    text=chunk,
+                    parse_mode="HTML",
+                    disable_web_page_preview=True,
+                )
+
+            await self.repository.mark_posts_digested(
+                post_ids=[post.id for post in posts],
+                digested_at=datetime.now(timezone.utc),
+                digest_id=digest_id,
+            )
+            logger.info("Digest sent successfully: digest_id=%s posts=%s", digest_id, len(posts))
+            return "sent"
 
     def _format_digest_message(
         self,

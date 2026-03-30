@@ -3,7 +3,9 @@ from __future__ import annotations
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 
+from tg_digest_bot.handlers.commands import create_commands_router
 from tg_digest_bot.handlers.forwarded_posts import create_forwarded_posts_router
+from tg_digest_bot.services.digest_builder import DigestService
 from tg_digest_bot.services.storage import PostStorageService
 
 
@@ -13,12 +15,22 @@ def create_bot(token: str) -> Bot:
 
 def create_dispatcher(
     source_chat_id: int,
+    source_thread_id: int | None,
     storage_service: PostStorageService,
+    digest_service: DigestService,
 ) -> Dispatcher:
     dispatcher = Dispatcher()
     dispatcher.include_router(
+        create_commands_router(
+            source_chat_id=source_chat_id,
+            source_thread_id=source_thread_id,
+            digest_service=digest_service,
+        )
+    )
+    dispatcher.include_router(
         create_forwarded_posts_router(
             source_chat_id=source_chat_id,
+            source_thread_id=source_thread_id,
             storage_service=storage_service,
         )
     )

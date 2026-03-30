@@ -24,17 +24,11 @@ async def main() -> None:
     connection = await init_db(settings.database_path)
     repository = PostRepository(connection)
     storage_service = PostStorageService(repository)
-
-    bot = create_bot(settings.bot_token)
-    dispatcher = create_dispatcher(
-        source_chat_id=settings.source_chat_id,
-        storage_service=storage_service,
-    )
-
     perplexity_client = PerplexityClient(
         api_key=settings.perplexity_api_key,
         model=settings.perplexity_model,
     )
+    bot = create_bot(settings.bot_token)
     digest_service = DigestService(
         repository=repository,
         perplexity_client=perplexity_client,
@@ -42,15 +36,30 @@ async def main() -> None:
         target_chat_id=settings.target_chat_id,
         target_thread_id=settings.target_thread_id,
     )
-    scheduler = create_scheduler(digest_service, settings.timezone)
+    dispatcher = create_dispatcher(
+        source_chat_id=settings.source_chat_id,
+        source_thread_id=settings.source_thread_id,
+        storage_service=storage_service,
+        digest_service=digest_service,
+    )
+    scheduler = create_scheduler(
+        digest_service=digest_service,
+        timezone_name=settings.timezone,
+        schedule_times=settings.digest_schedule_times,
+    )
     scheduler.start()
 
     logger.info(
-        "Bot started: source_chat_id=%s target_chat_id=%s target_thread_id=%s timezone=%s",
+        (
+            "Bot started: source_chat_id=%s source_thread_id=%s "
+            "target_chat_id=%s target_thread_id=%s timezone=%s schedule_times=%s"
+        ),
         settings.source_chat_id,
+        settings.source_thread_id,
         settings.target_chat_id,
         settings.target_thread_id,
         settings.timezone,
+        ", ".join(settings.digest_schedule_times),
     )
 
     try:
