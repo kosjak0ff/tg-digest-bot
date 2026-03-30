@@ -6,6 +6,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+from tg_digest_bot.services.thread_matching import matches_thread
 from tg_digest_bot.services.digest_builder import DigestService
 
 
@@ -21,7 +22,13 @@ def create_commands_router(
 
     @router.message(Command("digest_now"), F.chat.id == source_chat_id)
     async def handle_digest_now(message: Message) -> None:
-        if source_thread_id is not None and message.message_thread_id != source_thread_id:
+        if not matches_thread(message, source_thread_id):
+            logger.info(
+                "Manual digest command ignored: chat=%s thread=%s expected_thread=%s",
+                message.chat.id,
+                message.message_thread_id,
+                source_thread_id,
+            )
             return
 
         status = await digest_service.run_digest()

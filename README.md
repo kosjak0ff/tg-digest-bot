@@ -6,7 +6,7 @@
 
 Что делает:
 
-- принимает пересланные посты из `SOURCE_CHAT_ID`
+- принимает посты из `SOURCE_CHAT_ID` (forwarded или обычные текстовые сообщения)
 - при необходимости ограничивает приём одним `SOURCE_THREAD_ID`
 - сохраняет посты в SQLite
 - по расписанию собирает дайджест через Perplexity API
@@ -94,7 +94,7 @@ Simple Telegram bot for personal use.
 
 What it does:
 
-- accepts forwarded posts from `SOURCE_CHAT_ID`
+- accepts posts from `SOURCE_CHAT_ID` (forwarded or regular text messages)
 - can optionally limit intake to one `SOURCE_THREAD_ID`
 - stores posts in SQLite
 - builds digest summaries with Perplexity API on schedule

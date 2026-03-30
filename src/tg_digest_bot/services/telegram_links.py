@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from aiogram.types import Message
+if TYPE_CHECKING:
+    from aiogram.types import Message
+
+PUBLIC_TME_LINK_RE = re.compile(r"https://t\.me/([A-Za-z0-9_]+)/(\d+)")
 
 
-def extract_original_post_context(message: Message) -> dict[str, Any]:
+def extract_original_post_context(message: "Message") -> dict[str, Any]:
     context: dict[str, Any] = {
         "original_link": None,
         "original_chat_title": None,
@@ -51,7 +55,40 @@ def extract_original_post_context(message: Message) -> dict[str, Any]:
         if username and forward_from_message_id:
             context["original_link"] = f"https://t.me/{username}/{forward_from_message_id}"
 
+    if context["original_link"] is None:
+        explicit_link = extract_original_link_from_text(message.text or message.caption or "")
+        if explicit_link is not None:
+            context["original_link"] = explicit_link
+            parsed = parse_public_tme_link(explicit_link)
+            if parsed is not None:
+                username, message_id = parsed
+                context["original_chat_username"] = username
+                context["original_message_id"] = message_id
+
     return context
+
+
+def extract_original_link_from_text(text: str) -> str | None:
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if not line.lower().startswith("original:"):
+            continue
+        candidate = line.split(":", 1)[1].strip()
+        parsed = parse_public_tme_link(candidate)
+        if parsed is None:
+            continue
+        username, message_id = parsed
+        return f"https://t.me/{username}/{message_id}"
+    return None
+
+
+def parse_public_tme_link(value: str) -> tuple[str, int] | None:
+    match = PUBLIC_TME_LINK_RE.search(value.strip())
+    if match is None:
+        return None
+    return match.group(1), int(match.group(2))
 
 
 def _as_iso(value: datetime | None) -> str | None:
