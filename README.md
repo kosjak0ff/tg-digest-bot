@@ -117,6 +117,14 @@ PYTHONPATH=src python -m tg_digest_bot
 
 ## Ubuntu VPS deployment
 
+Recommended layout:
+
+- dedicated Linux user: `tg-digest-bot`
+- bot home directory: `/home/tg-digest-bot`
+- project files: `/home/tg-digest-bot/app`
+- virtualenv: `/home/tg-digest-bot/app/.venv`
+- database: `/home/tg-digest-bot/app/data/tg_digest_bot.sqlite3`
+
 ### 1. System packages
 
 ```bash
@@ -124,29 +132,56 @@ sudo apt update
 sudo apt install -y python3.12 python3.12-venv
 ```
 
-### 2. Prepare app directory
+### 2. Create a dedicated user
+
+Create a separate system user for the bot and give it its own home directory:
 
 ```bash
-cd /opt
-sudo mkdir -p tg-digest-bot
-sudo chown "$USER":"$USER" tg-digest-bot
-cd tg-digest-bot
+sudo useradd --create-home --home-dir /home/tg-digest-bot --shell /usr/sbin/nologin tg-digest-bot
 ```
 
-Copy project files into the directory, then:
+If the user already exists, you can skip this step.
+
+### 3. Prepare the app directory inside the bot user's home
 
 ```bash
+sudo mkdir -p /home/tg-digest-bot/app
+sudo chown -R tg-digest-bot:tg-digest-bot /home/tg-digest-bot
+```
+
+Copy project files into `/home/tg-digest-bot/app`, then run setup as that user:
+
+```bash
+sudo -u tg-digest-bot -H bash -lc '
+cd /home/tg-digest-bot/app
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 cp .env.example .env
 mkdir -p data
+'
 ```
 
-### 3. Configure environment
+If you prefer cloning from GitHub directly on the server:
 
-Edit `.env` and set real values:
+```bash
+sudo -u tg-digest-bot -H bash -lc '
+cd /home/tg-digest-bot
+git clone git@github.com:kosjak0ff/tg-digest-bot.git app
+cd app
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+cp .env.example .env
+mkdir -p data
+'
+```
+
+### 4. Configure environment
+
+Edit `/home/tg-digest-bot/app/.env` and set real values:
 
 - `BOT_TOKEN`
 - `PERPLEXITY_API_KEY`
@@ -157,9 +192,21 @@ Edit `.env` and set real values:
 - `TIMEZONE=UTC`
 - `DIGEST_SCHEDULE_TIMES=08:00,20:00`
 
-### 4. Install systemd unit
+Example:
 
-Edit paths in [`systemd/tg-digest-bot.service`](/home/code/codex-projects/tg-digest-bot/systemd/tg-digest-bot.service), then copy it:
+```bash
+sudo -u tg-digest-bot -H editor /home/tg-digest-bot/app/.env
+```
+
+### 5. Install systemd unit
+
+The provided unit already points to the dedicated user and home-based paths:
+
+- user: `tg-digest-bot`
+- working directory: `/home/tg-digest-bot/app`
+- venv: `/home/tg-digest-bot/app/.venv`
+
+Copy it into `systemd`:
 
 ```bash
 sudo cp systemd/tg-digest-bot.service /etc/systemd/system/tg-digest-bot.service
@@ -167,11 +214,25 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now tg-digest-bot.service
 ```
 
-### 5. Check logs
+### 6. Check logs
 
 ```bash
 sudo systemctl status tg-digest-bot.service
 journalctl -u tg-digest-bot.service -f
+```
+
+### 7. Update the bot later
+
+If the project lives in `/home/tg-digest-bot/app`, updates are easiest to apply as the bot user:
+
+```bash
+sudo -u tg-digest-bot -H bash -lc '
+cd /home/tg-digest-bot/app
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt
+'
+sudo systemctl restart tg-digest-bot.service
 ```
 
 ## Notes and limitations
@@ -180,6 +241,7 @@ journalctl -u tg-digest-bot.service -f
 - The digest is based only on posts that were not yet included in a previous digest.
 - The scheduler uses `TIMEZONE=UTC` by default.
 - This MVP is single-user and single-source-chat by design.
+- For VPS deployment, a dedicated Linux user is recommended so the bot files, `.env`, and SQLite database stay isolated in its own home directory.
 
 ## Useful checks
 

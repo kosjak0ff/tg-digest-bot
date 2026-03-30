@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
-Group=ubuntu
-WorkingDirectory=/opt/tg-digest-bot
-Environment=PYTHONPATH=/opt/tg-digest-bot/src
-ExecStart=/opt/tg-digest-bot/.venv/bin/python -m tg_digest_bot
+User=tg-digest-bot
+Group=tg-digest-bot
+WorkingDirectory=/home/tg-digest-bot/app
+Environment=PYTHONPATH=/home/tg-digest-bot/app/src
+ExecStart=/home/tg-digest-bot/app/.venv/bin/python -m tg_digest_bot
 Restart=always
 RestartSec=5
 
