@@ -6,9 +6,9 @@ After=network.target
 Type=simple
 User=tg-digest-bot
 Group=tg-digest-bot
-WorkingDirectory=/home/tg-digest-bot/app
-Environment=PYTHONPATH=/home/tg-digest-bot/app/src
-ExecStart=/home/tg-digest-bot/app/.venv/bin/python -m tg_digest_bot
+WorkingDirectory=/home/tg-digest-bot/tg-digest-bot
+Environment=PYTHONPATH=/home/tg-digest-bot/tg-digest-bot/src
+ExecStart=/home/tg-digest-bot/tg-digest-bot/.venv/bin/python -m tg_digest_bot
 Restart=always
 RestartSec=5
 

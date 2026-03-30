@@ -121,9 +121,9 @@ Recommended layout:
 
 - dedicated Linux user: `tg-digest-bot`
 - bot home directory: `/home/tg-digest-bot`
-- project files: `/home/tg-digest-bot/app`
-- virtualenv: `/home/tg-digest-bot/app/.venv`
-- database: `/home/tg-digest-bot/app/data/tg_digest_bot.sqlite3`
+- project files: `/home/tg-digest-bot/tg-digest-bot`
+- virtualenv: `/home/tg-digest-bot/tg-digest-bot/.venv`
+- database: `/home/tg-digest-bot/tg-digest-bot/data/tg_digest_bot.sqlite3`
 
 ### 1. System packages
 
@@ -142,18 +142,18 @@ sudo useradd --create-home --home-dir /home/tg-digest-bot --shell /usr/sbin/nolo
 
 If the user already exists, you can skip this step.
 
-### 3. Prepare the app directory inside the bot user's home
+### 3. Prepare the project directory inside the bot user's home
 
 ```bash
-sudo mkdir -p /home/tg-digest-bot/app
+sudo mkdir -p /home/tg-digest-bot/tg-digest-bot
 sudo chown -R tg-digest-bot:tg-digest-bot /home/tg-digest-bot
 ```
 
-Copy project files into `/home/tg-digest-bot/app`, then run setup as that user:
+Copy project files into `/home/tg-digest-bot/tg-digest-bot`, then run setup as that user:
 
 ```bash
 sudo -u tg-digest-bot -H bash -lc '
-cd /home/tg-digest-bot/app
+cd /home/tg-digest-bot/tg-digest-bot
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -168,8 +168,8 @@ If you prefer cloning from GitHub directly on the server:
 ```bash
 sudo -u tg-digest-bot -H bash -lc '
 cd /home/tg-digest-bot
-git clone git@github.com:kosjak0ff/tg-digest-bot.git app
-cd app
+git clone git@github.com:kosjak0ff/tg-digest-bot.git tg-digest-bot
+cd tg-digest-bot
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -181,7 +181,7 @@ mkdir -p data
 
 ### 4. Configure environment
 
-Edit `/home/tg-digest-bot/app/.env` and set real values:
+Edit `/home/tg-digest-bot/tg-digest-bot/.env` and set real values:
 
 - `BOT_TOKEN`
 - `PERPLEXITY_API_KEY`
@@ -195,7 +195,7 @@ Edit `/home/tg-digest-bot/app/.env` and set real values:
 Example:
 
 ```bash
-sudo -u tg-digest-bot -H editor /home/tg-digest-bot/app/.env
+sudo -u tg-digest-bot -H editor /home/tg-digest-bot/tg-digest-bot/.env
 ```
 
 ### 5. Install systemd unit
@@ -203,8 +203,8 @@ sudo -u tg-digest-bot -H editor /home/tg-digest-bot/app/.env
 The provided unit already points to the dedicated user and home-based paths:
 
 - user: `tg-digest-bot`
-- working directory: `/home/tg-digest-bot/app`
-- venv: `/home/tg-digest-bot/app/.venv`
+- working directory: `/home/tg-digest-bot/tg-digest-bot`
+- venv: `/home/tg-digest-bot/tg-digest-bot/.venv`
 
 Copy it into `systemd`:
 
@@ -223,11 +223,11 @@ journalctl -u tg-digest-bot.service -f
 
 ### 7. Update the bot later
 
-If the project lives in `/home/tg-digest-bot/app`, updates are easiest to apply as the bot user:
+If the project lives in `/home/tg-digest-bot/tg-digest-bot`, updates are easiest to apply as the bot user:
 
 ```bash
 sudo -u tg-digest-bot -H bash -lc '
-cd /home/tg-digest-bot/app
+cd /home/tg-digest-bot/tg-digest-bot
 git pull
 source .venv/bin/activate
 pip install -r requirements.txt
