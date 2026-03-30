@@ -60,7 +60,7 @@ sudo chown -R tg-digest-bot:tg-digest-bot /home/tg-digest-bot
 ```bash
 sudo -u tg-digest-bot -H bash -lc '
 cd /home/tg-digest-bot
-git clone git@github.com:kosjak0ff/tg-digest-bot.git tg-digest-bot
+git clone https://github.com/kosjak0ff/tg-digest-bot.git tg-digest-bot
 cd tg-digest-bot
 python3.12 -m venv .venv
 source .venv/bin/activate
@@ -148,7 +148,7 @@ If you clone from GitHub:
 ```bash
 sudo -u tg-digest-bot -H bash -lc '
 cd /home/tg-digest-bot
-git clone git@github.com:kosjak0ff/tg-digest-bot.git tg-digest-bot
+git clone https://github.com/kosjak0ff/tg-digest-bot.git tg-digest-bot
 cd tg-digest-bot
 python3.12 -m venv .venv
 source .venv/bin/activate
